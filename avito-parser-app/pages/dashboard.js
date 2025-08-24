@@ -64,33 +64,49 @@ function Dashboard() {
     ];
 
     const handleParse = async () => {
-        setIsLoading(true);
-        setError('');
-        try {
-            const token = localStorage.getItem('token');
-            const response = await axios.post('/api/parse', { url }, {
-                headers: { Authorization: `Bearer ${token}` },
-                timeout: 15000
-            });
-
-            // Сохраняем данные в IndexedDB вместо localStorage
-            const dbStorage = new IndexedDBStorage();
-            await dbStorage.init();
-            await dbStorage.saveData(response.data, 'current');
-            await dbStorage.saveData(url, 'sourceUrl'); // Сохраняем URL для reference
-
-            router.push('/results');
-        } catch (error) {
-            if (error.response?.data?.error) {
-                setError(error.response.data.error);
-            } else {
-                setError('Ошибка при парсинге данных. Пожалуйста, проверьте URL и попробуйте снова.');
-            }
-            console.error('Parse error:', error);
-        } finally {
-            setIsLoading(false);
+    setIsLoading(true);
+    setError('');
+    try {
+        const token = localStorage.getItem('token');
+        
+        // Проверяем наличие токена
+        if (!token) {
+            setError('Требуется авторизация. Пожалуйста, войдите снова.');
+            router.push('/login');
+            return;
         }
-    };
+
+        const response = await axios.post('/api/parse', { url }, {
+            headers: { 
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            timeout: 15000
+        });
+
+        // Сохраняем данные в IndexedDB вместо localStorage
+        const dbStorage = new IndexedDBStorage();
+        await dbStorage.init();
+        await dbStorage.saveData(response.data, 'current');
+        await dbStorage.saveData(url, 'sourceUrl'); // Сохраняем URL для reference
+
+        router.push('/results');
+    } catch (error) {
+        // Обрабатываем ошибку 401 отдельно
+        if (error.response?.status === 401) {
+            setError('Сессия истекла. Пожалуйста, войдите снова.');
+            localStorage.removeItem('token');
+            router.push('/login');
+        } else if (error.response?.data?.error) {
+            setError(error.response.data.error);
+        } else {
+            setError('Ошибка при парсинге данных. Пожалуйста, проверьте URL и попробуйте снова.');
+        }
+        console.error('Parse error:', error);
+    } finally {
+        setIsLoading(false);
+    }
+};
 
     return (
         <Box
