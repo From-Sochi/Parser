@@ -2,15 +2,7 @@ import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import Link from 'next/link';
-import {
-    Box,
-    Container,
-    Paper,
-    TextField,
-    Button,
-    Typography,
-    Link as MuiLink
-} from '@mui/material';
+import { Box, Container, Paper, TextField, Button, Typography, Link as MuiLink } from '@mui/material';
 import { useEffect } from 'react';
 
 export default function Login() {
