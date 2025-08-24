@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
+// Убедитесь, что установили xlsx-style: npm install xlsx-style
 import { withAuth } from '../components/withAuth';
 import {
-    Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Box, Container, Pagination, Stack, Chip, Card, CardContent, CardActions, IconButton, Tooltip
+    Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
+    Typography, Box, Container, Pagination, Stack, Chip, Card, CardContent, CardActions,
+    IconButton, Tooltip, MenuItem, Select, FormControl, InputLabel
 } from '@mui/material';
-import { Download, ArrowBack, ArrowForward, Refresh } from '@mui/icons-material';
+import { Download, ArrowBack, ArrowForward, Refresh, Sort } from '@mui/icons-material';
 
 function Results() {
     const [data, setData] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
+    const [sortField, setSortField] = useState('id');
+    const [sortOrder, setSortOrder] = useState('asc');
     const itemsPerPage = 5;
 
     useEffect(() => {
@@ -22,15 +27,68 @@ function Results() {
         }
     };
 
+    // Функция сортировки данных
+    const sortedData = [...data].sort((a, b) => {
+        let valueA = a[sortField];
+        let valueB = b[sortField];
+
+        if (typeof valueA === 'string') valueA = valueA.toLowerCase();
+        if (typeof valueB === 'string') valueB = valueB.toLowerCase();
+
+        if (valueA < valueB) return sortOrder === 'asc' ? -1 : 1;
+        if (valueA > valueB) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+    });
+
     const exportToExcel = () => {
-        const worksheet = XLSX.utils.json_to_sheet(data);
+        // Создаем новую книгу
         const workbook = XLSX.utils.book_new();
+
+        // Создаем данные для экспорта
+        const excelData = [
+            ['ID', 'Name', 'Email', 'City', 'Phone'], // Заголовки
+            ...sortedData.map(item => [
+                item.id,
+                item.name,
+                item.email,
+                item.city,
+                item.phone
+            ])
+        ];
+
+        // Создаем worksheet
+        const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+
+        // Устанавливаем ширину колонок
+        const columnWidths = [
+            { wch: 10 }, // ID
+            { wch: 20 }, // Name
+            { wch: 30 }, // Email
+            { wch: 15 }, // City
+            { wch: 15 }  // Phone
+        ];
+        worksheet['!cols'] = columnWidths;
+
+        // Добавляем автофильтр
+        worksheet['!autofilter'] = {
+            ref: XLSX.utils.encode_range({
+                s: { r: 0, c: 0 },
+                e: { r: 0, c: 4 }
+            })
+        };
+
+        // Добавляем заморозку первой строки
+        worksheet['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' };
+
+        // Добавляем лист в книгу
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Users Data');
+
+        // Сохраняем файл
         XLSX.writeFile(workbook, 'users_data.xlsx');
     };
 
-    const totalPages = Math.ceil(data.length / itemsPerPage);
-    const currentData = data.slice(
+    const totalPages = Math.ceil(sortedData.length / itemsPerPage);
+    const currentData = sortedData.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
@@ -39,143 +97,196 @@ function Results() {
         setCurrentPage(value);
     };
 
+    const handleSortFieldChange = (event) => {
+        setSortField(event.target.value);
+        setCurrentPage(1);
+    };
+
+    const handleSortOrderChange = (event) => {
+        setSortOrder(event.target.value);
+        setCurrentPage(1);
+    };
+
     return (
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Card elevation={3}>
-                <CardContent>
-                    {/* Заголовок и кнопки */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                        <Typography variant="h4" component="h1" color="primary" fontWeight="bold">
-                            Results
-                        </Typography>
+        <Box sx={{
+            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+            minHeight: '100vh',
+            py: 4
+        }}>
+            <Container maxWidth="lg">
+                <Card elevation={3}>
+                    <CardContent>
+                        {/* Заголовок и кнопки */}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                            <Typography variant="h4" component="h1" color="primary" fontWeight="bold">
+                                Results
+                            </Typography>
 
-                        <Stack direction="row" spacing={2}>
-                            <Tooltip title="Refresh data">
-                                <IconButton color="primary" onClick={loadData}>
-                                    <Refresh />
-                                </IconButton>
-                            </Tooltip>
-
-                            <Button
-                                variant="contained"
-                                color="success"
-                                startIcon={<Download />}
-                                onClick={exportToExcel}
-                                sx={{
-                                    borderRadius: 2,
-                                    px: 3,
-                                    py: 1
-                                }}
-                            >
-                                Export to Excel
-                            </Button>
-                        </Stack>
-                    </Box>
-
-                    {/* Информация о данных */}
-                    <Box sx={{ mb: 2 }}>
-                        <Chip
-                            label={`Total records: ${data.length}`}
-                            color="primary"
-                            variant="outlined"
-                            sx={{ mr: 1 }}
-                        />
-                        <Chip
-                            label={`Page ${currentPage} of ${totalPages}`}
-                            color="secondary"
-                            variant="outlined"
-                        />
-                    </Box>
-
-                    {/* Таблица */}
-                    <TableContainer component={Paper} elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
-                        <Table sx={{ minWidth: 650 }}>
-                            <TableHead>
-                                <TableRow sx={{ bgcolor: 'primary.main' }}>
-                                    <TableCell sx={{ color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>ID</TableCell>
-                                    <TableCell sx={{ color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>Name</TableCell>
-                                    <TableCell sx={{ color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>Email</TableCell>
-                                    <TableCell sx={{ color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>City</TableCell>
-                                    <TableCell sx={{ color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>Phone</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {currentData.map((item, index) => (
-                                    <TableRow
-                                        key={item.id}
-                                        sx={{
-                                            '&:nth-of-type(odd)': { bgcolor: 'action.hover' },
-                                            '&:hover': { bgcolor: 'action.selected' },
-                                            transition: 'background-color 0.2s'
-                                        }}
-                                    >
-                                        <TableCell sx={{ fontWeight: 'medium' }}>{item.id}</TableCell>
-                                        <TableCell sx={{ color: 'text.primary', fontWeight: '500' }}>{item.name}</TableCell>
-                                        <TableCell sx={{ color: 'primary.main' }}>{item.email}</TableCell>
-                                        <TableCell>{item.city}</TableCell>
-                                        <TableCell sx={{ fontFamily: 'monospace' }}>{item.phone}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-
-                    {/* Пагинация */}
-                    {data.length > 0 && (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                            <Stack direction="row" spacing={2} alignItems="center">
-                                <Button
-                                    variant="outlined"
-                                    color="primary"
-                                    startIcon={<ArrowBack />}
-                                    disabled={currentPage === 1}
-                                    onClick={() => setCurrentPage(p => p - 1)}
-                                    sx={{ borderRadius: 2 }}
-                                >
-                                    Previous
-                                </Button>
-
-                                <Pagination
-                                    count={totalPages}
-                                    page={currentPage}
-                                    onChange={handlePageChange}
-                                    color="primary"
-                                    shape="rounded"
-                                    showFirstButton
-                                    showLastButton
-                                />
+                            <Stack direction="row" spacing={2}>
+                                <Tooltip title="Refresh data">
+                                    <IconButton color="primary" onClick={loadData}>
+                                        <Refresh />
+                                    </IconButton>
+                                </Tooltip>
 
                                 <Button
-                                    variant="outlined"
-                                    color="primary"
-                                    endIcon={<ArrowForward />}
-                                    disabled={currentPage === totalPages}
-                                    onClick={() => setCurrentPage(p => p + 1)}
-                                    sx={{ borderRadius: 2 }}
+                                    variant="contained"
+                                    color="success"
+                                    startIcon={<Download />}
+                                    onClick={exportToExcel}
+                                    sx={{
+                                        borderRadius: 2,
+                                        px: 3,
+                                        py: 1,
+                                        fontWeight: 'bold'
+                                    }}
                                 >
-                                    Next
+                                    Выгрузить в Excel
                                 </Button>
                             </Stack>
                         </Box>
-                    )}
 
-                    {/* Сообщение если данных нет */}
-                    {data.length === 0 && (
-                        <Box sx={{ textAlign: 'center', py: 8 }}>
-                            <Typography variant="h6" color="text.secondary">
-                                No data available. Please upload a file first.
-                            </Typography>
+                        {/* Сортировка */}
+                        <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Sort color="primary" />
+                                <Typography variant="body1" fontWeight="500">
+                                    Отсортировать по:
+                                </Typography>
+                            </Box>
+
+                            <FormControl size="small" sx={{ minWidth: 120 }}>
+                                <InputLabel>Field</InputLabel>
+                                <Select
+                                    value={sortField}
+                                    label="Field"
+                                    onChange={handleSortFieldChange}
+                                >
+                                    <MenuItem value="id">ID</MenuItem>
+                                    <MenuItem value="name">Name</MenuItem>
+                                    <MenuItem value="email">Email</MenuItem>
+                                    <MenuItem value="city">City</MenuItem>
+                                    <MenuItem value="phone">Phone</MenuItem>
+                                </Select>
+                            </FormControl>
+
+                            <FormControl size="small" sx={{ minWidth: 120 }}>
+                                <InputLabel>Order</InputLabel>
+                                <Select
+                                    value={sortOrder}
+                                    label="Order"
+                                    onChange={handleSortOrderChange}
+                                >
+                                    <MenuItem value="asc">По возрастанию</MenuItem>
+                                    <MenuItem value="desc">По убыванию</MenuItem>
+                                </Select>
+                            </FormControl>
+
+                            <Chip
+                                label={`Всего результатов: ${data.length}`}
+                                color="primary"
+                                variant="outlined"
+                                sx={{ fontWeight: '500' }}
+                            />
+                            <Chip
+                                label={`Страница ${currentPage} из ${totalPages}`}
+                                color="secondary"
+                                variant="outlined"
+                                sx={{ fontWeight: '500' }}
+                            />
                         </Box>
-                    )}
-                </CardContent>
 
-                <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
-                    <Typography variant="body2" color="text.secondary">
-                        Data loaded from local storage
-                    </Typography>
-                </CardActions>
-            </Card>
-        </Container>
+                        {/* Таблица */}
+                        <TableContainer component={Paper} elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+                            <Table sx={{ minWidth: 650 }}>
+                                <TableHead>
+                                    <TableRow sx={{ bgcolor: 'primary.main' }}>
+                                        <TableCell sx={{ color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>ID</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>Name</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>Email</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>City</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>Phone</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {currentData.map((item, index) => (
+                                        <TableRow
+                                            key={item.id}
+                                            sx={{
+                                                '&:nth-of-type(odd)': { bgcolor: 'action.hover' },
+                                                '&:hover': { bgcolor: 'action.selected' },
+                                                transition: 'background-color 0.2s'
+                                            }}
+                                        >
+                                            <TableCell sx={{ fontWeight: 'medium' }}>{item.id}</TableCell>
+                                            <TableCell sx={{ color: 'text.primary', fontWeight: '500' }}>{item.name}</TableCell>
+                                            <TableCell sx={{ color: 'primary.main' }}>{item.email}</TableCell>
+                                            <TableCell>{item.city}</TableCell>
+                                            <TableCell sx={{ fontFamily: 'monospace' }}>{item.phone}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+
+                        {/* Пагинация */}
+                        {sortedData.length > 0 && (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                                <Stack direction="row" spacing={2} alignItems="center">
+                                    <Button
+                                        variant="outlined"
+                                        color="primary"
+                                        startIcon={<ArrowBack />}
+                                        disabled={currentPage === 1}
+                                        onClick={() => setCurrentPage(p => p - 1)}
+                                        sx={{ borderRadius: 2 }}
+                                    >
+                                        Предыдущая
+                                    </Button>
+
+                                    <Pagination
+                                        count={totalPages}
+                                        page={currentPage}
+                                        onChange={handlePageChange}
+                                        color="primary"
+                                        shape="rounded"
+                                        showFirstButton
+                                        showLastButton
+                                    />
+
+                                    <Button
+                                        variant="outlined"
+                                        color="primary"
+                                        endIcon={<ArrowForward />}
+                                        disabled={currentPage === totalPages}
+                                        onClick={() => setCurrentPage(p => p + 1)}
+                                        sx={{ borderRadius: 2 }}
+                                    >
+                                        Следующая
+                                    </Button>
+                                </Stack>
+                            </Box>
+                        )}
+
+                        {/* Сообщение если данных нет */}
+                        {data.length === 0 && (
+                            <Box sx={{ textAlign: 'center', py: 8 }}>
+                                <Typography variant="h6" color="text.secondary">
+                                    No data available. Please upload a file first.
+                                </Typography>
+                            </Box>
+                        )}
+                    </CardContent>
+
+                    <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
+                        <Typography variant="body2" color="text.secondary">
+
+                            Данные загружены из локального хранилища • Сортировка по: {sortField}
+                        </Typography>
+                    </CardActions>
+                </Card>
+            </Container>
+        </Box>
     );
 }
 

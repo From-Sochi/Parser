@@ -21,7 +21,8 @@
     "react-dom": "19.1.0",
     "react-hook-form": "^7.62.0",
     "react-virtuoso": "^4.14.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "xlsx-style": "^0.8.13"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
