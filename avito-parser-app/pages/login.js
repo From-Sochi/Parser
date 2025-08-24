@@ -11,10 +11,22 @@ import {
     Typography,
     Link as MuiLink
 } from '@mui/material';
+import { useEffect } from 'react';
 
 export default function Login() {
     const { register, handleSubmit } = useForm();
     const router = useRouter();
+
+    // КОСТЫЛЬ- Убрал марджин у body
+    useEffect(() => {
+        document.body.style.padding = '0';
+        document.body.style.margin = '0';
+
+        return () => {
+            document.body.style.padding = '';
+            document.body.style.margin = '';
+        };
+    }, []);
 
     const onSubmit = async (data) => {
         try {

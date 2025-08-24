@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import { withAuth } from '../components/withAuth';
@@ -40,6 +40,17 @@ function Dashboard() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+    // КОСТЫЛЬ- Убрал марджин у body
+    useEffect(() => {
+        document.body.style.padding = '0';
+        document.body.style.margin = '0';
+
+        return () => {
+            document.body.style.padding = '';
+            document.body.style.margin = '';
+        };
+    }, []);
+
     const features = [
         {
             icon: <Speed sx={{ fontSize: 40, color: 'primary.main' }} />,
@@ -59,54 +70,54 @@ function Dashboard() {
         {
             icon: <DataArray sx={{ fontSize: 40, color: 'info.main' }} />,
             title: 'Умный экспорт',
-            description: 'Динамические заголовки в Excel'
+            description: 'Динамические заголовки и экспорт в Excel'
         }
     ];
 
     const handleParse = async () => {
-    setIsLoading(true);
-    setError('');
-    try {
-        const token = localStorage.getItem('token');
-        
-        // Проверяем наличие токена
-        if (!token) {
-            setError('Требуется авторизация. Пожалуйста, войдите снова.');
-            router.push('/login');
-            return;
+        setIsLoading(true);
+        setError('');
+        try {
+            const token = localStorage.getItem('token');
+
+            // Проверяем наличие токена
+            if (!token) {
+                setError('Требуется авторизация. Пожалуйста, войдите снова.');
+                router.push('/login');
+                return;
+            }
+
+            const response = await axios.post('/api/parse', { url }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                timeout: 15000
+            });
+
+            // Сохраняем данные в IndexedDB вместо localStorage
+            const dbStorage = new IndexedDBStorage();
+            await dbStorage.init();
+            await dbStorage.saveData(response.data, 'current');
+            await dbStorage.saveData(url, 'sourceUrl'); // Сохраняем URL для reference
+
+            router.push('/results');
+        } catch (error) {
+            // Обрабатываем ошибку 401 отдельно
+            if (error.response?.status === 401) {
+                setError('Сессия истекла. Пожалуйста, войдите снова.');
+                localStorage.removeItem('token');
+                router.push('/login');
+            } else if (error.response?.data?.error) {
+                setError(error.response.data.error);
+            } else {
+                setError('Ошибка при парсинге данных. Пожалуйста, проверьте URL и попробуйте снова.');
+            }
+            console.error('Parse error:', error);
+        } finally {
+            setIsLoading(false);
         }
-
-        const response = await axios.post('/api/parse', { url }, {
-            headers: { 
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            timeout: 15000
-        });
-
-        // Сохраняем данные в IndexedDB вместо localStorage
-        const dbStorage = new IndexedDBStorage();
-        await dbStorage.init();
-        await dbStorage.saveData(response.data, 'current');
-        await dbStorage.saveData(url, 'sourceUrl'); // Сохраняем URL для reference
-
-        router.push('/results');
-    } catch (error) {
-        // Обрабатываем ошибку 401 отдельно
-        if (error.response?.status === 401) {
-            setError('Сессия истекла. Пожалуйста, войдите снова.');
-            localStorage.removeItem('token');
-            router.push('/login');
-        } else if (error.response?.data?.error) {
-            setError(error.response.data.error);
-        } else {
-            setError('Ошибка при парсинге данных. Пожалуйста, проверьте URL и попробуйте снова.');
-        }
-        console.error('Parse error:', error);
-    } finally {
-        setIsLoading(false);
-    }
-};
+    };
 
     return (
         <Box
@@ -233,17 +244,32 @@ function Dashboard() {
 
                                 <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
                                     Примеры: {' '}
-                                    <Link href="#" onClick={() => setUrl('https://jsonplaceholder.typicode.com/users')}>
+                                    <Button
+                                        variant="text"
+                                        size="small"
+                                        onClick={() => setUrl('https://jsonplaceholder.typicode.com/users')}
+                                        sx={{ minWidth: 'auto', p: 0.5, color: 'text.secondary' }}
+                                    >
                                         /users
-                                    </Link>
+                                    </Button>
                                     {', '}
-                                    <Link href="#" onClick={() => setUrl('https://jsonplaceholder.typicode.com/posts')}>
+                                    <Button
+                                        variant="text"
+                                        size="small"
+                                        onClick={() => setUrl('https://jsonplaceholder.typicode.com/posts')}
+                                        sx={{ minWidth: 'auto', p: 0.5, color: 'text.secondary' }}
+                                    >
                                         /posts
-                                    </Link>
+                                    </Button>
                                     {', '}
-                                    <Link href="#" onClick={() => setUrl('https://jsonplaceholder.typicode.com/comments')}>
+                                    <Button
+                                        variant="text"
+                                        size="small"
+                                        onClick={() => setUrl('https://jsonplaceholder.typicode.com/comments')}
+                                        sx={{ minWidth: 'auto', p: 0.5, color: 'text.secondary' }}
+                                    >
                                         /comments
-                                    </Link>
+                                    </Button>
                                 </Typography>
                             </Box>
 

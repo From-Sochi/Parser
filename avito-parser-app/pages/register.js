@@ -12,11 +12,24 @@ import {
     Link as MuiLink
 } from '@mui/material';
 import BackButton from '../components/BackButton';
+import { useEffect } from 'react';
 
 export default function Register() {
+    // КОСТЫЛЬ- Убрал марджин у body
+    useEffect(() => {
+        document.body.style.padding = '0';
+        document.body.style.margin = '0';
+
+        return () => {
+            document.body.style.padding = '';
+            document.body.style.margin = '';
+        };
+    }, []);
+
     const { register, handleSubmit, formState: { errors }, watch } = useForm();
     const router = useRouter();
     const password = watch('password');
+
 
     const onSubmit = async (data) => {
         try {

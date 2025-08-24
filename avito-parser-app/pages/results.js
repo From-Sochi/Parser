@@ -20,6 +20,17 @@ function Results() {
     const [isLoading, setIsLoading] = useState(true);
     const itemsPerPage = 5;
 
+    // КОСТЫЛЬ- Убрал марджин у body
+    useEffect(() => {
+        document.body.style.padding = '0';
+        document.body.style.margin = '0';
+
+        return () => {
+            document.body.style.padding = '';
+            document.body.style.margin = '';
+        };
+    }, []);
+
     useEffect(() => {
         loadData();
     }, []);
@@ -132,7 +143,8 @@ function Results() {
         <Box sx={{
             background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
             minHeight: '100vh',
-            py: 4
+            py: 4,
+            paddingTop: 17,
         }}>
             <BackButton />
             <Container maxWidth="lg">
