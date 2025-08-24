@@ -9,11 +9,9 @@ import {
     TextField,
     Button,
     Typography,
-    Link as MuiLink,
-    Alert
+    Link as MuiLink
 } from '@mui/material';
 import BackButton from '../components/BackButton';
-
 
 export default function Register() {
     const { register, handleSubmit, formState: { errors }, watch } = useForm();
@@ -22,7 +20,6 @@ export default function Register() {
 
     const onSubmit = async (data) => {
         try {
-            // Проверяем совпадение паролей
             if (data.password !== data.confirmPassword) {
                 alert('Пароли не совпадают');
                 return;
