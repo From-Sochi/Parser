@@ -12,6 +12,8 @@ import {
     Link as MuiLink,
     Alert
 } from '@mui/material';
+import BackButton from '../components/BackButton';
+
 
 export default function Register() {
     const { register, handleSubmit, formState: { errors }, watch } = useForm();
@@ -51,6 +53,7 @@ export default function Register() {
                 padding: 2
             }}
         >
+            <BackButton />
             <Container component="main" maxWidth="sm">
                 <Paper
                     elevation={8}
