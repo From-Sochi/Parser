@@ -2,18 +2,27 @@ import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import Link from 'next/link';
-import Button from '@mui/material/Button';
-
+import {
+    Box,
+    Container,
+    Paper,
+    TextField,
+    Button,
+    Typography,
+    Link as MuiLink,
+    Alert
+} from '@mui/material';
 
 export default function Register() {
-    const { register, handleSubmit, formState: { errors } } = useForm();
+    const { register, handleSubmit, formState: { errors }, watch } = useForm();
     const router = useRouter();
+    const password = watch('password');
 
     const onSubmit = async (data) => {
         try {
             // Проверяем совпадение паролей
             if (data.password !== data.confirmPassword) {
-                alert('Passwords do not match');
+                alert('Пароли не совпадают');
                 return;
             }
 
@@ -27,61 +36,161 @@ export default function Register() {
             localStorage.setItem('user', JSON.stringify(response.data.user));
             router.push('/dashboard');
         } catch (error) {
-            alert('Registration failed: ' + (error.response?.data?.error || error.message));
+            alert('Ошибка регистрации: ' + (error.response?.data?.error || error.message));
         }
     };
 
     return (
-        <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
-            <h1>Create Account</h1>
-            <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                <input
-                    {...register('name', { required: 'Name is required' })}
-                    placeholder="Full Name"
-                />
-                {errors.name && <span style={{ color: 'red' }}>{errors.name.message}</span>}
+        <Box
+            sx={{
+                minHeight: '100vh',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 2
+            }}
+        >
+            <Container component="main" maxWidth="sm">
+                <Paper
+                    elevation={8}
+                    sx={{
+                        padding: 4,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        borderRadius: 2,
+                        background: 'rgba(255, 255, 255, 0.95)',
+                        backdropFilter: 'blur(10px)'
+                    }}
+                >
+                    <Typography component="h1" variant="h4" sx={{ mb: 3, fontWeight: 'bold' }}>
+                        Создать аккаунт
+                    </Typography>
 
-                <input
-                    {...register('email', {
-                        required: 'Email is required',
-                        pattern: {
-                            value: /^\S+@\S+$/i,
-                            message: 'Invalid email address'
-                        }
-                    })}
-                    placeholder="Email"
-                />
-                {errors.email && <span style={{ color: 'red' }}>{errors.email.message}</span>}
+                    <Box
+                        component="form"
+                        onSubmit={handleSubmit(onSubmit)}
+                        sx={{ width: '100%' }}
+                    >
+                        <TextField
+                            {...register('name', { required: 'Имя обязательно' })}
+                            margin="normal"
+                            required
+                            fullWidth
+                            id="name"
+                            label="Полное имя"
+                            name="name"
+                            autoComplete="name"
+                            autoFocus
+                            variant="outlined"
+                            error={!!errors.name}
+                            helperText={errors.name?.message}
+                            sx={{ mb: 2 }}
+                        />
 
-                <input
-                    {...register('password', {
-                        required: 'Password is required',
-                        minLength: {
-                            value: 6,
-                            message: 'Password must be at least 6 characters'
-                        }
-                    })}
-                    type="password"
-                    placeholder="Password"
-                />
-                {errors.password && <span style={{ color: 'red' }}>{errors.password.message}</span>}
+                        <TextField
+                            {...register('email', {
+                                required: 'Email обязателен',
+                                pattern: {
+                                    value: /^\S+@\S+$/i,
+                                    message: 'Некорректный email адрес'
+                                }
+                            })}
+                            margin="normal"
+                            required
+                            fullWidth
+                            id="email"
+                            label="Email"
+                            name="email"
+                            autoComplete="email"
+                            variant="outlined"
+                            error={!!errors.email}
+                            helperText={errors.email?.message}
+                            sx={{ mb: 2 }}
+                        />
 
-                <input
-                    {...register('confirmPassword', {
-                        required: 'Please confirm your password'
-                    })}
-                    type="password"
-                    placeholder="Confirm Password"
-                />
-                {errors.confirmPassword && <span style={{ color: 'red' }}>{errors.confirmPassword.message}</span>}
+                        <TextField
+                            {...register('password', {
+                                required: 'Пароль обязателен',
+                                minLength: {
+                                    value: 6,
+                                    message: 'Пароль должен содержать минимум 6 символов'
+                                }
+                            })}
+                            margin="normal"
+                            required
+                            fullWidth
+                            name="password"
+                            label="Пароль"
+                            type="password"
+                            id="password"
+                            autoComplete="new-password"
+                            variant="outlined"
+                            error={!!errors.password}
+                            helperText={errors.password?.message}
+                            sx={{ mb: 2 }}
+                        />
 
-                <Button variant="contained" color="success" type="submit">Register</Button>
-            </form>
+                        <TextField
+                            {...register('confirmPassword', {
+                                required: 'Подтвердите пароль',
+                                validate: value => value === password || 'Пароли не совпадают'
+                            })}
+                            margin="normal"
+                            required
+                            fullWidth
+                            name="confirmPassword"
+                            label="Подтверждение пароля"
+                            type="password"
+                            id="confirmPassword"
+                            autoComplete="new-password"
+                            variant="outlined"
+                            error={!!errors.confirmPassword}
+                            helperText={errors.confirmPassword?.message}
+                            sx={{ mb: 3 }}
+                        />
 
-            <p style={{ marginTop: '20px' }}>
-                Already have an account? <Link href="/login">Login here</Link>
-            </p>
-        </div>
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            size="large"
+                            sx={{
+                                mt: 2,
+                                mb: 2,
+                                py: 1.5,
+                                fontSize: '1.1rem',
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)'
+                                }
+                            }}
+                        >
+                            Зарегистрироваться
+                        </Button>
+
+                        <Box sx={{ textAlign: 'center', mt: 3 }}>
+                            <Typography variant="body2">
+                                Уже есть аккаунт?{' '}
+                                <MuiLink
+                                    component={Link}
+                                    href="/login"
+                                    sx={{
+                                        color: '#667eea',
+                                        textDecoration: 'none',
+                                        '&:hover': {
+                                            textDecoration: 'underline'
+                                        }
+                                    }}
+                                >
+                                    Войдите здесь
+                                </MuiLink>
+                            </Typography>
+                        </Box>
+                    </Box>
+                </Paper>
+            </Container>
+        </Box>
     );
 }
-
