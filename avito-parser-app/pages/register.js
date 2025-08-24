@@ -2,6 +2,8 @@ import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import Link from 'next/link';
+import Button from '@mui/material/Button';
+
 
 export default function Register() {
     const { register, handleSubmit, formState: { errors } } = useForm();
@@ -73,7 +75,7 @@ export default function Register() {
                 />
                 {errors.confirmPassword && <span style={{ color: 'red' }}>{errors.confirmPassword.message}</span>}
 
-                <button type="submit">Register</button>
+                <Button variant="contained" color="success" type="submit">Register</Button>
             </form>
 
             <p style={{ marginTop: '20px' }}>
@@ -82,3 +84,4 @@ export default function Register() {
         </div>
     );
 }
+

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import { withAuth } from '../components/withAuth'; // ← ИМПОРТ HOC
+import Button from '@mui/material/Button';
+
 
 function Dashboard() {
     const [isLoading, setIsLoading] = useState(false);
@@ -27,9 +29,9 @@ function Dashboard() {
     return (
         <div>
             <h1>Dashboard</h1>
-            <button onClick={handleParse} disabled={isLoading}>
+            <Button variant="contained" color="success" onClick={handleParse} disabled={isLoading}>
                 {isLoading ? 'Parsing...' : 'Start Parsing'}
-            </button>
+            </Button >
         </div>
     );
 }

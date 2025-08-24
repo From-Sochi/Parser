@@ -2,6 +2,8 @@ import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import Link from 'next/link';
+import Button from '@mui/material/Button';
+
 
 export default function Login() {
     const { register, handleSubmit } = useForm();
@@ -24,7 +26,7 @@ export default function Login() {
             <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                 <input {...register('email')} placeholder="Email" />
                 <input {...register('password')} type="password" placeholder="Password" />
-                <button type="submit">Login</button>
+                <Button variant="contained" color="success" type="submit">Login</Button>
             </form>
 
             <p style={{ marginTop: '20px' }}>
