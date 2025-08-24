@@ -244,32 +244,38 @@ function Dashboard() {
 
                                 <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
                                     Примеры: {' '}
-                                    <Button
-                                        variant="text"
-                                        size="small"
-                                        onClick={() => setUrl('https://jsonplaceholder.typicode.com/users')}
-                                        sx={{ minWidth: 'auto', p: 0.5, color: 'text.secondary' }}
+                                    <Link
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setUrl('https://jsonplaceholder.typicode.com/users');
+                                        }}
+                                        sx={{ cursor: 'pointer' }}
                                     >
-                                        users
-                                    </Button>
+                                        /users
+                                    </Link>
                                     {', '}
-                                    <Button
-                                        variant="text"
-                                        size="small"
-                                        onClick={() => setUrl('https://jsonplaceholder.typicode.com/posts')}
-                                        sx={{ minWidth: 'auto', p: 0.5, color: 'text.secondary' }}
+                                    <Link
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setUrl('https://jsonplaceholder.typicode.com/posts');
+                                        }}
+                                        sx={{ cursor: 'pointer' }}
                                     >
-                                        posts
-                                    </Button>
+                                        /posts
+                                    </Link>
                                     {', '}
-                                    <Button
-                                        variant="text"
-                                        size="small"
-                                        onClick={() => setUrl('https://jsonplaceholder.typicode.com/comments')}
-                                        sx={{ minWidth: 'auto', p: 0.5, color: 'text.secondary' }}
+                                    <Link
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setUrl('https://jsonplaceholder.typicode.com/comments');
+                                        }}
+                                        sx={{ cursor: 'pointer' }}
                                     >
-                                        comments
-                                    </Button>
+                                        /comments
+                                    </Link>
                                 </Typography>
                             </Box>
 
