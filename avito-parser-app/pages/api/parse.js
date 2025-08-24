@@ -1,46 +1,4 @@
-// import { verifyToken } from '../../lib/auth';
-// import axios from 'axios';
-
-// export default async function handler(req, res) {
-//     // Проверка авторизации
-//     const token = req.headers.authorization?.replace('Bearer ', '');
-//     const decoded = verifyToken(token);
-
-//     if (!decoded) {
-//         return res.status(401).json({ error: 'Unauthorized' });
-//     }
-
-//     if (req.method !== 'POST') {
-//         return res.status(405).json({ error: 'Method not allowed' });
-//     }
-
-//     try {
-//         // Вместо парсинга Avito получаем тестовые данные
-//         const response = await axios.get('https://jsonplaceholder.typicode.com/users');
-
-//         // Преобразуем данные в нужный формат
-//         const parsedData = response.data.map(user => ({
-//             id: user.id,
-//             name: user.name,
-//             username: user.username,
-//             email: user.email,
-//             street: user.address.street,
-//             city: user.address.city,
-//             zipcode: user.address.zipcode,
-//             phone: user.phone,
-//             company: user.company.name,
-//             date: new Date().toLocaleDateString(),
-//             time: new Date().toLocaleTimeString()
-//         }));
-
-//         res.json(parsedData);
-//     } catch (error) {
-//         res.status(500).json({ error: 'Failed to fetch data' });
-//     }
-// }
-
-
-
+//ДИНАМИЧЕСКИЙ ИМПОРТ
 import { verifyToken } from '../../lib/auth';
 import axios from 'axios';
 
@@ -59,69 +17,104 @@ export default async function handler(req, res) {
 
     try {
         const { url } = req.body;
-        
+
         if (!url) {
             return res.status(400).json({ error: 'URL is required' });
         }
 
         // Валидация URL
         try {
-            new URL(url);
+            const parsedUrl = new URL(url);
+            // Дополнительная проверка на допустимые протоколы
+            if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+                return res.status(400).json({ error: 'Only HTTP and HTTPS protocols are allowed' });
+            }
         } catch (error) {
             return res.status(400).json({ error: 'Invalid URL' });
         }
 
         // Получаем данные с указанного URL
         const response = await axios.get(url, {
-            timeout: 10000, // 10 секунд таймаут
+            timeout: 10000,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'application/json'
+            },
+            validateStatus: function (status) {
+                return status >= 200 && status < 300; // Разрешаем только успешные статусы
             }
         });
 
-        // Проверяем, что данные являются массивом
-        if (!Array.isArray(response.data)) {
-            return res.status(400).json({ error: 'Response data is not an array' });
+        let responseData = response.data;
+
+        // Обрабатываем разные форматы ответа
+        // 1. Если ответ - массив, используем как есть
+        // 2. Если ответ - объект, ищем в нем массив данных
+        if (!Array.isArray(responseData)) {
+            // Пытаемся найти массив в объекте
+            const arrayKeys = Object.keys(responseData).filter(key =>
+                Array.isArray(responseData[key])
+            );
+
+            if (arrayKeys.length === 1) {
+                // Если нашли ровно один массив - используем его
+                responseData = responseData[arrayKeys[0]];
+            } else if (arrayKeys.length > 1) {
+                // Если несколько массивов - возвращаем ошибку
+                return res.status(400).json({
+                    error: 'Response contains multiple arrays. Please specify which one to use.'
+                });
+            } else {
+                // Если массивов нет - создаем массив из одного элемента
+                responseData = [responseData];
+            }
         }
 
         // Динамически формируем данные
-        const parsedData = response.data.map((item, index) => {
+        const parsedData = responseData.map((item, index) => {
             const result = {
                 id: item.id !== undefined ? item.id : index + 1,
                 date: new Date().toLocaleDateString(),
                 time: new Date().toLocaleTimeString()
             };
 
-            // Динамически добавляем все поля из объекта
-            Object.keys(item).forEach(key => {
-                // Пропускаем уже добавленные поля
-                if (key !== 'id') {
-                    // Если значение - объект, преобразуем в строку
-                    if (typeof item[key] === 'object' && item[key] !== null) {
-                        result[key] = JSON.stringify(item[key]);
-                    } else {
-                        result[key] = item[key];
-                    }
-                }
-            });
+            // Рекурсивная функция для извлечения всех полей
+            const extractFields = (obj, prefix = '') => {
+                Object.keys(obj).forEach(key => {
+                    const fullKey = prefix ? `${prefix}_${key}` : key;
+                    const value = obj[key];
 
+                    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                        // Если значение - объект, рекурсивно извлекаем его поля
+                        extractFields(value, fullKey);
+                    } else if (Array.isArray(value)) {
+                        // Если значение - массив, преобразуем в строку
+                        result[fullKey] = JSON.stringify(value);
+                    } else {
+                        // Простые значения
+                        result[fullKey] = value;
+                    }
+                });
+            };
+
+            extractFields(item);
             return result;
         });
 
         res.json(parsedData);
     } catch (error) {
         console.error('Parse error:', error.message);
-        
+
         if (error.code === 'ECONNABORTED') {
             return res.status(408).json({ error: 'Request timeout' });
         }
-        
+
         if (error.response) {
-            return res.status(error.response.status).json({ 
-                error: `Server responded with status ${error.response.status}` 
+            return res.status(error.response.status).json({
+                error: `Server responded with status ${error.response.status}: ${error.response.statusText}`
             });
         }
-        
+
         res.status(500).json({ error: 'Failed to fetch data: ' + error.message });
     }
 }
