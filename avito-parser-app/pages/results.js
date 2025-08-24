@@ -347,7 +347,7 @@ function Results() {
 
                     <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
                         <Typography variant="body2" color="text.secondary">
-                            Данные загружены {new Date().toLocaleString()} • Сортировка по: {sortField} ({sortOrder})
+                            Данные загружены {new Date().toLocaleString()} • Сортировка по: {sortField}
                         </Typography>
                     </CardActions>
                 </Card>

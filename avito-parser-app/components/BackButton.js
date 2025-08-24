@@ -2,13 +2,13 @@ import { useRouter } from 'next/router';
 import { IconButton, Tooltip } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 
-export default function BackButton({ onDashboard }) {
+export default function BackButton() {
     const router = useRouter();
 
     const handleGoBack = () => {
-        // Если мы на странице dashboard и передан обработчик, используем его
-        if (router.pathname === '/dashboard' && onDashboard) {
-            onDashboard();
+        // Если мы на dashboard, всегда переходим на register
+        if (router.pathname === '/dashboard') {
+            router.push('/register');
         } else {
             // Для других страниц используем стандартное поведение
             router.back();
@@ -16,7 +16,7 @@ export default function BackButton({ onDashboard }) {
     };
 
     return (
-        <Tooltip title="Назад">
+        <Tooltip title="Назад к регистрации">
             <IconButton
                 onClick={handleGoBack}
                 sx={{
