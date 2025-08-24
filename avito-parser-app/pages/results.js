@@ -144,7 +144,7 @@ function Results() {
             background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
             minHeight: '100vh',
             py: 4,
-            paddingTop: 17,
+            paddingTop: 10,
         }}>
             <BackButton />
             <Container maxWidth="lg">
@@ -154,7 +154,7 @@ function Results() {
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                             <Box>
                                 <Typography variant="h4" component="h1" color="primary" fontWeight="bold">
-                                    Результаты парсинга
+                                    Results
                                 </Typography>
                                 {sourceUrl && (
                                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>

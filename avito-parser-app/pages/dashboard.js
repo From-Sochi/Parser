@@ -250,7 +250,7 @@ function Dashboard() {
                                         onClick={() => setUrl('https://jsonplaceholder.typicode.com/users')}
                                         sx={{ minWidth: 'auto', p: 0.5, color: 'text.secondary' }}
                                     >
-                                        /users
+                                        users
                                     </Button>
                                     {', '}
                                     <Button
@@ -259,7 +259,7 @@ function Dashboard() {
                                         onClick={() => setUrl('https://jsonplaceholder.typicode.com/posts')}
                                         sx={{ minWidth: 'auto', p: 0.5, color: 'text.secondary' }}
                                     >
-                                        /posts
+                                        posts
                                     </Button>
                                     {', '}
                                     <Button
@@ -268,7 +268,7 @@ function Dashboard() {
                                         onClick={() => setUrl('https://jsonplaceholder.typicode.com/comments')}
                                         sx={{ minWidth: 'auto', p: 0.5, color: 'text.secondary' }}
                                     >
-                                        /comments
+                                        comments
                                     </Button>
                                 </Typography>
                             </Box>
